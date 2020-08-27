@@ -1,0 +1,38 @@
+---
+
+- step:
+    name: Gather data
+    image: python:3.8
+    command:
+      - pip install google-cloud-bigquery
+      - python bigquery.py {parameters}
+    parameters:
+      - name: bigquery-table
+        type: string
+        default: example_dataset.example_table
+    inputs:
+      - name: credentials
+        default: datum://01743033-2936-3628-9557-1177242492c3
+    environment-variables:
+      - name: GOOGLE_APPLICATION_CREDENTIALS
+        default: /valohai/inputs/credentials/key.json
+    
+- step:
+    name: Train model
+    image: python:3.8
+    command: python train.py
+    inputs:
+      - name: dataset
+
+- pipeline:
+    name: Run everything
+    nodes:
+      - name: gather-data
+        step: Gather data
+        type: execution
+      - name: train-model
+        step: Train model
+        type: execution
+    edges:
+      - source: gather-data.output.*.csv
+        target: train-model.input.dataset
